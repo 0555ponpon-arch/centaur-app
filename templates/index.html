@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>追切チェッカー</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #f5f5f5; }
+        .container { background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        input, button { width: 100%; padding: 15px; margin-top: 10px; font-size: 16px; box-sizing: border-box; }
+        button { background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .result { margin-top: 20px; padding: 15px; background: #e9ecef; border-radius: 5px; display: none; }
+        .horse-box { background: #fff; padding: 10px; margin-top: 10px; border-left: 5px solid #28a745; border-radius: 3px; }
+        h4 { margin: 0 0 10px 0; color: #333; }
+        p { margin: 5px 0; font-size: 14px; line-height: 1.4; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🏇 追切データ検索</h2>
+        <input type="text" id="raceName" placeholder="どのレースの追切時計を知りたいですか？">
+        <button onclick="fetchData()">検索する</button>
+        <div id="resultBox" class="result"></div>
+    </div>
+
+    <script>
+        async function fetchData() {
+            const raceName = document.getElementById('raceName').value;
+            if (!raceName) return alert('レース名を入力してください');
+            
+            const resultBox = document.getElementById('resultBox');
+            resultBox.style.display = 'none';
+            resultBox.innerHTML = `<h3>${raceName} の追切情報</h3>`;
+            
+            const response = await fetch('/api/get_training_data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ race_name: raceName })
+            });
+            const data = await response.json();
+            
+            data.horses.forEach(horse => {
+                const horseHTML = `
+                    <div class="horse-box">
+                        <h4>🐴 ${horse.name}</h4>
+                        <p><strong>【1週前追切】</strong><br>時計: ${horse.w1_time}<br>評価: ${horse.w1_eval}</p>
+                        <p><strong>【最終追切(水曜)】</strong><br>時計: ${horse.final_time}<br>評価: ${horse.final_eval}</p>
+                    </div>
+                `;
+                resultBox.innerHTML += horseHTML;
+            });
+            
+            resultBox.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
